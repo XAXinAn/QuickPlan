@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">QuickPlan</string>
+    <string name="previous_month">上个月</string>
+    <string name="next_month">下个月</string>
+    <string name="sunday_short">日</string>
+    <string name="monday_short">一</string>
+    <string name="tuesday_short">二</string>
+    <string name="wednesday_short">三</string>
+    <string name="thursday_short">四</string>
+    <string name="friday_short">五</string>
+    <string name="saturday_short">六</string>
+    <string name="no_schedule_for_this_day">这一天没有日程</string>
+    <string name="confirm_delete_title">确认删除</string>
+    <string name="confirm_delete_message">您确定要删除日程 "%1$s" 吗？</string>
+    <string name="delete">删除</string>
+    <string name="cancel">取消</string>
+    <string name="delete_schedule">删除日程</string>
+    <string name="add_schedule_title">添加日程</string>
+    <string name="edit_schedule_title">编辑日程</string>
+    <string name="back">返回</string>
+    <string name="selected_date">选中日期：%1$s</string>
+    <string name="schedule_content_hint">日程内容</string>
+    <string name="select_time">选择时间：%1$s</string>
+    <string name="save_schedule">保存日程</string>
+    <string name="all_schedules_title">所有日程</string>
+    <string name="urgency_overdue">已截止</string>
+    <string name="urgency_within_one_day">一天内</string>
+    <string name="urgency_within_half_day">半天内</string>
+    <string name="urgency_within_three_days">三天内</string>
+    <string name="urgency_within_one_week">一周内</string>
+    <string name="urgency_within_one_month">一个月内</string>
+    <string name="urgency_beyond_one_month">一个月外</string>
+    <string name="today">今天</string>
+</resources>
