@@ -88,7 +88,6 @@ fun AddEditScheduleScreen(
             val urgencyText = scheduleViewModel.getScheduleItemById(scheduleId ?: "")?.urgency?.let {
                 when (it) {
                     Urgency.OVERDUE -> stringResource(R.string.urgency_overdue)
-                    Urgency.WITHIN_HALF_DAY -> stringResource(R.string.urgency_within_half_day)
                     Urgency.WITHIN_ONE_DAY -> stringResource(R.string.urgency_within_one_day)
                     Urgency.WITHIN_THREE_DAYS -> stringResource(R.string.urgency_within_three_days)
                     Urgency.WITHIN_ONE_WEEK -> stringResource(R.string.urgency_within_one_week)

@@ -47,7 +47,6 @@ import com.example.quickplan.ui.theme.Orange
 fun getUrgencyColor(urgency: Urgency): Color {
     return when (urgency) {
         Urgency.OVERDUE -> Color.Red
-        Urgency.WITHIN_HALF_DAY -> Color(0xFFFFA500) // Dark Orange
         Urgency.WITHIN_ONE_DAY -> Orange
         Urgency.WITHIN_THREE_DAYS -> Color.Yellow
         Urgency.WITHIN_ONE_WEEK -> Color.Green
@@ -157,7 +156,6 @@ fun ScheduleListItem(schedule: ScheduleItem, onEdit: (ScheduleItem) -> Unit, onD
                 Text(
                     text = "紧急程度: ${when (schedule.urgency) {
                         Urgency.OVERDUE -> stringResource(R.string.urgency_overdue)
-                        Urgency.WITHIN_HALF_DAY -> stringResource(R.string.urgency_within_half_day)
                         Urgency.WITHIN_ONE_DAY -> stringResource(R.string.urgency_within_one_day)
                         Urgency.WITHIN_THREE_DAYS -> stringResource(R.string.urgency_within_three_days)
                         Urgency.WITHIN_ONE_WEEK -> stringResource(R.string.urgency_within_one_week)

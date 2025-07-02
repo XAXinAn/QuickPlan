@@ -93,6 +93,7 @@ fun DefaultPreview() {
         // For preview, we can pass a dummy NavController and a dummy ViewModel
         CalendarScreen(navController = rememberNavController(), scheduleViewModel = ScheduleViewModel(object : ScheduleDao {
             override fun getAllScheduleItems() = kotlinx.coroutines.flow.flowOf(emptyList<com.example.quickplan.data.ScheduleItem>())
+            override fun getAllScheduleItemsByUrgency() = kotlinx.coroutines.flow.flowOf(emptyList<com.example.quickplan.data.ScheduleItem>())
             override suspend fun insertScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}
             override suspend fun updateScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}
             override suspend fun deleteScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}

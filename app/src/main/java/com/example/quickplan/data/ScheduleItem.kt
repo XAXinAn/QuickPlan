@@ -7,7 +7,6 @@ import java.time.LocalTime
 
 enum class Urgency {
     OVERDUE,
-    WITHIN_HALF_DAY,
     WITHIN_ONE_DAY,
     WITHIN_THREE_DAYS,
     WITHIN_ONE_WEEK,

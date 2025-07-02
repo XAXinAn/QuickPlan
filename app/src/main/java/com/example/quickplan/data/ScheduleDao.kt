@@ -14,6 +14,9 @@ interface ScheduleDao {
     @Query("SELECT * FROM schedule_items ORDER BY date, time ASC")
     fun getAllScheduleItems(): Flow<List<ScheduleItem>>
 
+    @Query("SELECT * FROM schedule_items ORDER BY urgency, date, time ASC")
+    fun getAllScheduleItemsByUrgency(): Flow<List<ScheduleItem>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScheduleItem(item: ScheduleItem)
 

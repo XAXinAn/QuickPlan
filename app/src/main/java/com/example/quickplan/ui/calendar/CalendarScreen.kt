@@ -56,6 +56,7 @@ import com.example.quickplan.R
 import com.example.quickplan.data.ScheduleItem
 import com.example.quickplan.data.Urgency
 import com.example.quickplan.ui.schedule.ScheduleViewModel
+import com.example.quickplan.ui.schedule.UrgencyProgressBar
 import com.example.quickplan.ui.theme.QuickPlanTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -69,8 +70,9 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
     val initialDate = initialDateString?.let { LocalDate.parse(it) } ?: LocalDate.now()
     var currentMonth by remember { mutableStateOf(initialDate) }
     var selectedDate by remember { mutableStateOf(initialDate) }
-    
-    val schedulesForSelectedDate by scheduleViewModel.scheduleItems.collectAsState()
+
+    val allSchedules by scheduleViewModel.scheduleItemsByUrgency.collectAsState()
+    val selectedUrgency by scheduleViewModel.selectedUrgency.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<ScheduleItem?>(null) }
@@ -155,14 +157,25 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
                 selectedDate = date
             }
 
-            // Schedule List for selected date
+            UrgencyProgressBar(
+                schedules = allSchedules,
+                onUrgencySelected = { scheduleViewModel.onUrgencySelected(it) }
+            )
+
+            // Schedule List for selected date or urgency
+            val schedulesToShow = if (selectedUrgency != null) {
+                allSchedules.filter { it.urgency == selectedUrgency }
+            } else {
+                allSchedules.filter { it.date == selectedDate }.sortedBy { it.time }
+            }
+
             DailyScheduleList(
-                scheduleItems = schedulesForSelectedDate.filter { it.date == selectedDate }.sortedBy { it.time },
+                scheduleItems = schedulesToShow,
                 onDeleteItem = { item -> 
                     itemToDelete = item
                     showDeleteDialog = true
                 },
-                onEditItem = { item -> navController.navigate("add_edit_schedule/${selectedDate}?scheduleId=${item.id}") }
+                onEditItem = { item -> navController.navigate("add_edit_schedule/${item.date}?scheduleId=${item.id}") }
             )
         }
     }
@@ -229,7 +242,6 @@ fun DailyScheduleList(scheduleItems: List<ScheduleItem>, onDeleteItem: (Schedule
                             Text(
                                 text = "紧急程度: ${when (schedule.urgency) {
                                     Urgency.OVERDUE -> stringResource(R.string.urgency_overdue)
-                                    Urgency.WITHIN_HALF_DAY -> stringResource(R.string.urgency_within_half_day)
                                     Urgency.WITHIN_ONE_DAY -> stringResource(R.string.urgency_within_one_day)
                                     Urgency.WITHIN_THREE_DAYS -> stringResource(R.string.urgency_within_three_days)
                                     Urgency.WITHIN_ONE_WEEK -> stringResource(R.string.urgency_within_one_week)
@@ -260,7 +272,6 @@ fun DailyScheduleList(scheduleItems: List<ScheduleItem>, onDeleteItem: (Schedule
 fun getUrgencyColor(urgency: Urgency): Color {
     return when (urgency) {
         Urgency.OVERDUE -> Color.Red
-        Urgency.WITHIN_HALF_DAY -> Color(0xFFFFA500) // Dark Orange
         Urgency.WITHIN_ONE_DAY -> Orange
         Urgency.WITHIN_THREE_DAYS -> Color.Yellow
         Urgency.WITHIN_ONE_WEEK -> Color.Green
@@ -341,6 +352,7 @@ fun CalendarScreenPreview() {
         // For preview, we can pass a dummy NavController and a dummy ViewModel
         CalendarScreen(navController = rememberNavController(), scheduleViewModel = ScheduleViewModel(object : com.example.quickplan.data.ScheduleDao {
             override fun getAllScheduleItems() = kotlinx.coroutines.flow.flowOf(emptyList<com.example.quickplan.data.ScheduleItem>())
+            override fun getAllScheduleItemsByUrgency() = kotlinx.coroutines.flow.flowOf(emptyList<com.example.quickplan.data.ScheduleItem>())
             override suspend fun insertScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}
             override suspend fun updateScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}
             override suspend fun deleteScheduleItem(item: com.example.quickplan.data.ScheduleItem) {}

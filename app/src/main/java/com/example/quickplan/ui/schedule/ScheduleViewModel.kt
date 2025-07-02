@@ -27,6 +27,25 @@ class ScheduleViewModel(private val scheduleDao: ScheduleDao) : ViewModel() {
         initialValue = emptyList()
     )
 
+    val scheduleItemsByUrgency: StateFlow<List<ScheduleItem>> = scheduleDao.getAllScheduleItemsByUrgency().map { items ->
+        items.sortedWith(compareBy<ScheduleItem> { it.urgency }.thenBy { it.date }.thenBy { it.time })
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    private val _selectedUrgency = MutableStateFlow<Urgency?>(null)
+    val selectedUrgency: StateFlow<Urgency?> = _selectedUrgency
+
+    fun onUrgencySelected(urgency: Urgency) {
+        if (_selectedUrgency.value == urgency) {
+            _selectedUrgency.value = null
+        } else {
+            _selectedUrgency.value = urgency
+        }
+    }
+
     fun getScheduleForDate(date: LocalDate): List<ScheduleItem> {
         return scheduleItems.value.filter { it.date == date }.sortedBy { it.time }
     }
@@ -42,7 +61,6 @@ class ScheduleViewModel(private val scheduleDao: ScheduleDao) : ViewModel() {
 
         return when {
             minutesUntil < 0 -> Urgency.OVERDUE
-            minutesUntil <= 30 * 60 -> Urgency.WITHIN_HALF_DAY // 30 hours for half a day, assuming a day is 24 hours
             minutesUntil <= 24 * 60 -> Urgency.WITHIN_ONE_DAY
             minutesUntil <= 3 * 24 * 60 -> Urgency.WITHIN_THREE_DAYS
             minutesUntil <= 7 * 24 * 60 -> Urgency.WITHIN_ONE_WEEK
