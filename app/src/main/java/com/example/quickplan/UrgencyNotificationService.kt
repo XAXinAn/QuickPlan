@@ -72,7 +72,7 @@ class UrgencyNotificationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "紧急程度通知"
             val descriptionText = "显示当前紧急程度的通知"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT // Changed to IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
