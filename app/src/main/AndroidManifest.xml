@@ -17,6 +17,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.QuickPlan">
         <service android:name=".UrgencyNotificationService" android:foregroundServiceType="dataSync" />
+
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"
