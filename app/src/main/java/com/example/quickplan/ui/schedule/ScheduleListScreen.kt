@@ -46,12 +46,12 @@ import com.example.quickplan.ui.theme.Orange
 @Composable
 fun getUrgencyColor(urgency: Urgency): Color {
     return when (urgency) {
-        Urgency.OVERDUE -> Color.Red
-        Urgency.WITHIN_ONE_DAY -> Orange
-        Urgency.WITHIN_THREE_DAYS -> Color.Yellow
-        Urgency.WITHIN_ONE_WEEK -> Color.Green
-        Urgency.WITHIN_ONE_MONTH -> Color.Blue
-        Urgency.BEYOND_ONE_MONTH -> Color.Gray
+        Urgency.OVERDUE -> Color(0xFFCC0000)
+        Urgency.WITHIN_ONE_DAY -> Color(0xFFE64A19)
+        Urgency.WITHIN_THREE_DAYS -> Color(0xFFCC7A00)
+        Urgency.WITHIN_ONE_WEEK -> Color(0xFFCC9A00)
+        Urgency.WITHIN_ONE_MONTH -> Color(0xFF888888)
+        Urgency.BEYOND_ONE_MONTH -> Color(0xFFAAAAAA)
     }
 }
 
@@ -132,9 +132,10 @@ fun ScheduleListScreen(
 @Composable
 fun ScheduleListItem(schedule: ScheduleItem, onEdit: (ScheduleItem) -> Unit, onDelete: (ScheduleItem) -> Unit) {
     Card(
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 2.dp)
     ) {
         Row(
             modifier = Modifier

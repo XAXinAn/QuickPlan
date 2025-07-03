@@ -25,8 +25,9 @@ import com.example.quickplan.data.ScheduleDao
 import com.example.quickplan.ui.calendar.CalendarScreen
 import com.example.quickplan.ui.schedule.AddEditScheduleScreen
 import com.example.quickplan.ui.schedule.ScheduleListScreen
-import com.example.quickplan.ui.schedule.ScheduleListViewModelFactory
 import com.example.quickplan.ui.schedule.ScheduleViewModel
+import com.example.quickplan.ui.schedule.ScheduleListViewModelFactory
+import com.example.quickplan.ui.schedule.UrgentScheduleListScreen
 import com.example.quickplan.ui.schedule.ScheduleViewModelFactory
 import com.example.quickplan.ui.theme.QuickPlanTheme
 
@@ -77,6 +78,14 @@ class MainActivity : ComponentActivity() {
                             popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(700)) }
                         ) {
                             ScheduleListScreen(navController = navController, scheduleViewModel = scheduleViewModel)
+                        }
+                        composable("urgent_schedule_list/{urgency}",
+                            arguments = listOf(navArgument("urgency") { type = NavType.StringType }),
+                            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = tween(700)) },
+                            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(700)) }
+                        ) {
+                            val urgencyString = it.arguments?.getString("urgency")
+                            UrgentScheduleListScreen(navController = navController, scheduleViewModel = scheduleViewModel, urgencyString = urgencyString)
                         }
                     }
                 }

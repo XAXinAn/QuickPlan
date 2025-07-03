@@ -16,7 +16,8 @@
     <string name="cancel">取消</string>
     <string name="delete_schedule">删除日程</string>
     <string name="add_schedule_title">添加日程</string>
-    <string name="edit_schedule_title">编辑日程</string>
+    <string name="edit_schedule_title">Edit Schedule</string>
+    <string name="urgent_schedules_title">Urgent Schedules</string>
     <string name="back">返回</string>
     <string name="selected_date">选中日期：%1$s</string>
     <string name="schedule_content_hint">日程内容</string>

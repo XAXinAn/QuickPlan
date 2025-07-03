@@ -157,10 +157,14 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
                 selectedDate = date
             }
 
-            UrgencyProgressBar(
-                schedules = allSchedules,
-                onUrgencySelected = { scheduleViewModel.onUrgencySelected(it) }
-            )
+            if (allSchedules.isNotEmpty()) {
+                UrgencyProgressBar(
+                    schedules = allSchedules,
+                    onUrgencySelected = { urgency ->
+                        navController.navigate("urgent_schedule_list/${urgency.name}")
+                    }
+                )
+            }
 
             // Schedule List for selected date or urgency
             val schedulesToShow = if (selectedUrgency != null) {
@@ -218,9 +222,10 @@ fun DailyScheduleList(scheduleItems: List<ScheduleItem>, onDeleteItem: (Schedule
             items(scheduleItems) {
                 schedule ->
                 Card(
+                    shape = MaterialTheme.shapes.small,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 2.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -271,12 +276,12 @@ fun DailyScheduleList(scheduleItems: List<ScheduleItem>, onDeleteItem: (Schedule
 @Composable
 fun getUrgencyColor(urgency: Urgency): Color {
     return when (urgency) {
-        Urgency.OVERDUE -> Color.Red
-        Urgency.WITHIN_ONE_DAY -> Orange
-        Urgency.WITHIN_THREE_DAYS -> Color.Yellow
-        Urgency.WITHIN_ONE_WEEK -> Color.Green
-        Urgency.WITHIN_ONE_MONTH -> Color.Blue
-        Urgency.BEYOND_ONE_MONTH -> Color.Gray
+        Urgency.OVERDUE -> Color(0xFFCC0000)
+        Urgency.WITHIN_ONE_DAY -> Color(0xFFE64A19)
+        Urgency.WITHIN_THREE_DAYS -> Color(0xFFCC7A00)
+        Urgency.WITHIN_ONE_WEEK -> Color(0xFFCC9A00)
+        Urgency.WITHIN_ONE_MONTH -> Color(0xFF888888)
+        Urgency.BEYOND_ONE_MONTH -> Color(0xFFAAAAAA)
     }
 }
 

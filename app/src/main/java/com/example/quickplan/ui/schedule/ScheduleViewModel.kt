@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
@@ -34,6 +35,21 @@ class ScheduleViewModel(private val scheduleDao: ScheduleDao) : ViewModel() {
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                delay(60 * 1000L) // Delay for 1 minute
+                scheduleItems.value.forEach { item ->
+                    val newUrgency = calculateUrgency(item.date, item.time)
+                    if (newUrgency != item.urgency) {
+                        scheduleDao.updateScheduleItem(item.copy(urgency = newUrgency))
+                        Log.d("ScheduleViewModel", "Updated urgency for item: ${item.content} to $newUrgency")
+                    }
+                }
+            }
+        }
+    }
 
     private val _selectedUrgency = MutableStateFlow<Urgency?>(null)
     val selectedUrgency: StateFlow<Urgency?> = _selectedUrgency
