@@ -1,6 +1,7 @@
 package com.example.quickplan
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -33,24 +34,19 @@ import com.example.quickplan.ui.theme.QuickPlanTheme
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var database: AppDatabase
-    private lateinit var scheduleDao: ScheduleDao
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "schedule-db"
-        ).build()
-        scheduleDao = database.scheduleDao()
+        // Start the foreground service
+        val serviceIntent = Intent(this, UrgencyNotificationService::class.java)
+        androidx.core.content.ContextCompat.startForegroundService(this, serviceIntent)
 
         setContent {
             QuickPlanTheme {
                 val navController = rememberNavController()
-                val scheduleViewModel: ScheduleViewModel = viewModel(factory = ScheduleViewModelFactory(scheduleDao))
+                val application = application as QuickPlanApplication
+                val scheduleViewModel: ScheduleViewModel = application.scheduleViewModel
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(navController = navController, startDestination = "calendar", modifier = Modifier.padding(innerPadding)) {

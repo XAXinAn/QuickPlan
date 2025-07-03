@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import com.example.quickplan.data.UrgencyProportions
 
 class ScheduleViewModel(private val scheduleDao: ScheduleDao) : ViewModel() {
 
@@ -36,7 +37,36 @@ class ScheduleViewModel(private val scheduleDao: ScheduleDao) : ViewModel() {
         initialValue = emptyList()
     )
 
+    private val _urgencyProportions = MutableStateFlow(UrgencyProportions())
+    val urgencyProportions: StateFlow<UrgencyProportions> = _urgencyProportions
+
     init {
+        viewModelScope.launch {
+            scheduleItems.collect { items ->
+                Log.d("ScheduleViewModel", "scheduleItems collected: ${items.size} items")
+                val totalItems = items.size.toFloat()
+                if (totalItems > 0) {
+                    val overdueCount = items.count { it.urgency == Urgency.OVERDUE }
+                    val withinOneDayCount = items.count { it.urgency == Urgency.WITHIN_ONE_DAY }
+                    val withinThreeDaysCount = items.count { it.urgency == Urgency.WITHIN_THREE_DAYS }
+                    val withinOneWeekCount = items.count { it.urgency == Urgency.WITHIN_ONE_WEEK }
+                    val withinOneMonthCount = items.count { it.urgency == Urgency.WITHIN_ONE_MONTH }
+                    val beyondOneMonthCount = items.count { it.urgency == Urgency.BEYOND_ONE_MONTH }
+
+                    _urgencyProportions.value = UrgencyProportions(
+                        overdue = overdueCount / totalItems,
+                        withinOneDay = withinOneDayCount / totalItems,
+                        withinThreeDays = withinThreeDaysCount / totalItems,
+                        withinOneWeek = withinOneWeekCount / totalItems,
+                        withinOneMonth = withinOneMonthCount / totalItems,
+                        beyondOneMonth = beyondOneMonthCount / totalItems
+                    )
+                } else {
+                    _urgencyProportions.value = UrgencyProportions()
+                }
+            }
+        }
+
         viewModelScope.launch {
             while (true) {
                 delay(60 * 1000L) // Delay for 1 minute
