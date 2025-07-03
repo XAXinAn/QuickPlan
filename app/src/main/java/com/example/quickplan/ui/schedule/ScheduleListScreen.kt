@@ -43,17 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.example.quickplan.ui.theme.Orange
 
-@Composable
-fun getUrgencyColor(urgency: Urgency): Color {
-    return when (urgency) {
-        Urgency.OVERDUE -> Color(0xFFCC0000)
-        Urgency.WITHIN_ONE_DAY -> Color(0xFFE64A19)
-        Urgency.WITHIN_THREE_DAYS -> Color(0xFFCC7A00)
-        Urgency.WITHIN_ONE_WEEK -> Color(0xFFCC9A00)
-        Urgency.WITHIN_ONE_MONTH -> Color(0xFF888888)
-        Urgency.BEYOND_ONE_MONTH -> Color(0xFFAAAAAA)
-    }
-}
+import com.example.quickplan.data.getUrgencyColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

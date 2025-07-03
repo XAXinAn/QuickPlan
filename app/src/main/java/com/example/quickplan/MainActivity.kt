@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,6 +48,19 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val application = application as QuickPlanApplication
                 val scheduleViewModel: ScheduleViewModel = application.scheduleViewModel
+
+                // Handle intent from notification
+                LaunchedEffect(intent) {
+                    val urgency = intent.getStringExtra(UrgencyNotificationService.EXTRA_URGENCY)
+                    if (urgency != null) {
+                        navController.navigate("urgent_schedule_list/${urgency}") {
+                            // Clear back stack to prevent navigating back to calendar
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(navController = navController, startDestination = "calendar", modifier = Modifier.padding(innerPadding)) {

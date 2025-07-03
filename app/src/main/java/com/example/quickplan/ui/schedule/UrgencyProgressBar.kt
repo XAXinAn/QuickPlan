@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.res.stringResource
 import com.example.quickplan.R
 import androidx.compose.material3.MaterialTheme
+import com.example.quickplan.data.getUrgencyColor
 
 @Composable
 fun UrgencyProgressBar(

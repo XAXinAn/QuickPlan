@@ -9,15 +9,23 @@
         android:id="@+id/notification_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="日程数量统计"
+        android:text="我的日程"
         android:textStyle="bold"
         android:textSize="16sp"
         android:textColor="@android:color/black"/>
 
-    <TextView
-        android:id="@+id/notification_content"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/notification_urgency_bar"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:scaleType="fitXY"
+        android:layout_marginTop="4dp"/>
+
+    <LinearLayout
+        android:id="@+id/notification_details_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text=""/>
+        android:orientation="vertical"
+        android:layout_marginTop="8dp"/>
 
 </LinearLayout>
