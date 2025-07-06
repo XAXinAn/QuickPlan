@@ -117,19 +117,22 @@ class MainActivity : ComponentActivity() {
                                 onClick = { pickImageLauncher.launch("image/*") },
                                 enabled = !isLoading
                             ) {
-                                Text(if (isLoading) "上传中..." else "上传图片获取截止日期")
+                                Text(if (isLoading) "上传中..." else "上传图片获取日程")
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             modelResponse?.let { response ->
-                                Text("截止日期: ${response.deadlineDate ?: "N/A"}")
-                                Text("截止时间: ${response.deadlineTime ?: "N/A"}")
-                                Text("通知内容: ${response.notificationContent ?: "N/A"}")
+                                response.events?.forEach { event ->
+                                    event.title?.let { Text("标题: $it") }
+                                    event.deadline?.let { Text("截止日期: $it") }
+                                    event.description?.let { Text("描述: $it") }
+                                    Spacer(modifier = Modifier.height(4.dp)) // Add a small space between events
+                                }
                             }
 
                             error?.let { errorMessage ->
-                                Text("错误: $errorMessage", color = MaterialTheme.colorScheme.error)
+                                Text("错误: $errorMessage", color = MaterialTheme.colorScheme.error, maxLines = Int.MAX_VALUE)
                             }
                         }
                     }

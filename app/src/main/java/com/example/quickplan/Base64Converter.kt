@@ -16,6 +16,6 @@ object Base64Converter {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+        return "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 }

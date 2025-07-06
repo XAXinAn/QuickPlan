@@ -1,6 +1,9 @@
 package com.example.quickplan.data.model
 
-import com.example.quickplan.ModelResponse
+import android.util.Log
+
+import com.example.quickplan.data.model.ModelResponse
+import com.example.quickplan.data.model.ModelServiceResponse
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -16,20 +19,23 @@ import java.util.concurrent.TimeUnit
 class LargeModelServiceImpl : LargeModelService {
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .writeTimeout(5, TimeUnit.SECONDS)
         .build()
     private val JSON = "application/json; charset=utf-8".toMediaType()
     private val GSON = Gson()
 
-    override suspend fun processImage(base64Image: String, prompt: String): ModelResponse {
+    override suspend fun processImage(base64Image: String, prompt: String): ModelServiceResponse {
         return withContext(Dispatchers.IO) {
             try {
-                val url = "http://10.0.2.2:8081/send/1"
+                val url = "http://192.168.43.227:8081/send/1"
+
+                Log.d("ImageUploadService", "Client sending base64Image length: ${base64Image.length}")
+                Log.d("ImageUploadService", "Client sending base64Image start: ${base64Image.take(100)}")
 
                 val jsonObject = JSONObject().apply {
-                    put("image", base64Image)
+                    put("image", base64Image) // Directly sending base64Image
                     put("prompt", prompt)
                 }
                 val requestBody = jsonObject.toString().toRequestBody(JSON)
@@ -40,23 +46,21 @@ class LargeModelServiceImpl : LargeModelService {
                     .build()
 
                 client.newCall(request).execute().use { response ->
+                    val rawResponseBody = response.body?.string()
                     if (!response.isSuccessful) {
-                        throw IOException("Unexpected code ${response.code}: ${response.body?.string()}")
+                        throw IOException("Unexpected code ${response.code}: ${rawResponseBody}")
                     }
-                    val responseBody = response.body?.string()
-                    if (responseBody.isNullOrEmpty()) {
+                    if (rawResponseBody.isNullOrEmpty()) {
                         throw IOException("Server returned empty or null response body.")
                     }
-                    val modelResponse = GSON.fromJson(responseBody, ModelResponse::class.java)
-                    if (modelResponse == null) {
-                        throw IOException("Failed to parse ModelResponse from server response: $responseBody")
-                    }
-                    modelResponse
+                    val modelResponse = GSON.fromJson(rawResponseBody, ModelResponse::class.java)
+                    ModelServiceResponse(modelResponse, rawResponseBody)
                 }
             } catch (e: Exception) {
-                e.printStackTrace() // Print stack trace for debugging
+                Log.e("ImageUploadService", "Error in processImage", e) // Use Log.e for errors
                 throw e // Re-throw the exception to be caught by ViewModel
             }
         }
     }
 }
+

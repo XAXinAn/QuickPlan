@@ -58,6 +58,10 @@ import com.example.quickplan.data.Urgency
 import com.example.quickplan.ui.schedule.ScheduleViewModel
 import com.example.quickplan.ui.schedule.UrgencyProgressBar
 import com.example.quickplan.ui.theme.QuickPlanTheme
+import com.example.quickplan.UploadImageViewModel
+import com.example.quickplan.UploadImageViewModelFactory
+import com.example.quickplan.data.model.LargeModelServiceImpl
+import android.app.Application
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,6 +81,17 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf<ScheduleItem?>(null) }
 
+    val context = LocalContext.current
+    val application = context.applicationContext as Application
+    val uploadImageViewModel: UploadImageViewModel = viewModel(factory = UploadImageViewModelFactory(application, LargeModelServiceImpl()))
+
+    val rawResponse by uploadImageViewModel.rawResponse.collectAsState()
+    var showRawResponseDialog by remember { mutableStateOf(false) }
+
+    if (rawResponse != null) {
+        showRawResponseDialog = true
+    }
+
     Scaffold(
         bottomBar = {
             BottomAppBar(containerColor = MaterialTheme.colorScheme.background) {
@@ -91,7 +106,7 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
                         Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.all_schedules_title))
                     }
                     FloatingActionButton(onClick = { navController.navigate("add_edit_schedule/${selectedDate}") }) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_schedule_title))
+                        Icon(Icons.Filled.Add, contentDescription = "上传图片获取日程")
                     }
                 }
             }
@@ -205,6 +220,25 @@ fun CalendarScreen(navController: NavController, scheduleViewModel: ScheduleView
                     }) {
                         Text(stringResource(R.string.cancel))
                     }
+                }
+            }
+        )
+    }
+
+    if (showRawResponseDialog && rawResponse != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showRawResponseDialog = false
+                uploadImageViewModel.clearRawResponse()
+            },
+            title = { Text("Raw Server Response") },
+            text = { Text(rawResponse ?: "") },
+            confirmButton = {
+                Button(onClick = { 
+                    showRawResponseDialog = false
+                    uploadImageViewModel.clearRawResponse()
+                }) {
+                    Text("OK")
                 }
             }
         )
