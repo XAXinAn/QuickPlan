@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: quickplan
+  ai:
+    openai:
+      api-key: sk-xilgchgcsjaxggcunlkimwkbactqjtynksvofpeaocyetpwz
+      base-url: https://api.siliconflow.cn
+      chat:
+        options:
+          model: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B

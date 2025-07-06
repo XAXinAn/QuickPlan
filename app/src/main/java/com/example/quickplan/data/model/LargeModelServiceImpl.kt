@@ -26,14 +26,17 @@ class LargeModelServiceImpl : LargeModelService {
     override suspend fun processImage(base64Image: String, prompt: String): ModelResponse {
         return withContext(Dispatchers.IO) {
             try {
-                val jsonBody = JSONObject().apply {
+                val url = "http://10.0.2.2:8081/send/1"
+
+                val jsonObject = JSONObject().apply {
                     put("image", base64Image)
                     put("prompt", prompt)
-                }.toString()
+                }
+                val requestBody = jsonObject.toString().toRequestBody(JSON)
 
                 val request = Request.Builder()
-                    .url("http://192.168.2.10:8080/send/1")
-                    .post(jsonBody.toRequestBody(JSON))
+                    .url(url)
+                    .post(requestBody)
                     .build()
 
                 client.newCall(request).execute().use { response ->
@@ -41,7 +44,14 @@ class LargeModelServiceImpl : LargeModelService {
                         throw IOException("Unexpected code ${response.code}: ${response.body?.string()}")
                     }
                     val responseBody = response.body?.string()
-                    GSON.fromJson(responseBody, ModelResponse::class.java)
+                    if (responseBody.isNullOrEmpty()) {
+                        throw IOException("Server returned empty or null response body.")
+                    }
+                    val modelResponse = GSON.fromJson(responseBody, ModelResponse::class.java)
+                    if (modelResponse == null) {
+                        throw IOException("Failed to parse ModelResponse from server response: $responseBody")
+                    }
+                    modelResponse
                 }
             } catch (e: Exception) {
                 e.printStackTrace() // Print stack trace for debugging
