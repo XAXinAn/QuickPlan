@@ -162,7 +162,7 @@ fun MessageList(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
     ) {
         if (messages.isEmpty()) {
             item {
@@ -219,6 +219,9 @@ fun EmptyState() {
  */
 @Composable
 fun MessageBubble(message: Message) {
+    // 只有内容不为空时才显示整个消息
+    if (message.content.isEmpty()) return
+    
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
@@ -258,12 +261,13 @@ fun MessageBubble(message: Message) {
                     MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Text(
-                    text = message.content,
+                    text = message.content.trimStart(),
                     modifier = Modifier.padding(12.dp),
                     color = if (message.isUser)
                         MaterialTheme.colorScheme.onPrimary
                     else
-                        MaterialTheme.colorScheme.onSecondaryContainer
+                        MaterialTheme.colorScheme.onSecondaryContainer,
+                    lineHeight = 20.sp
                 )
             }
             
@@ -501,17 +505,10 @@ fun ConversationItem(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                conversation.lastMessage?.let { lastMsg ->
-                    Text(
-                        text = lastMsg.take(30) + if (lastMsg.length > 30) "..." else "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
                 Text(
-                    text = "${conversation.messageCount} 条消息",
+                    text = "更新于 ${conversation.updatedAt.take(16).replace("T", " ")}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             IconButton(onClick = { showDeleteDialog = true }) {

@@ -39,7 +39,7 @@ object RetrofitClient {
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.MINUTES)  // 流式传输需要更长的读取超时
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }

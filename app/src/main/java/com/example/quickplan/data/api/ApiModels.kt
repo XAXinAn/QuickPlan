@@ -12,28 +12,21 @@ package com.example.quickplan.data.api
  * POST /api/ai/chat
  */
 data class ChatRequest(
-    val conversationId: String?, // 对话ID，新对话时为null
-    val message: String // 用户输入的消息内容
-)
-
-/**
- * 发送消息响应体
- */
-data class ChatResponse(
-    val conversationId: String, // 对话ID（新对话会返回新ID）
-    val messageId: String, // AI消息的唯一ID
-    val reply: String, // AI的回复内容
-    val timestamp: Long // 消息时间戳
+    val memoryId: String, // 对话ID（必填）
+    val message: String, // 用户输入的消息内容
+    val userId: String? = null // 用户ID（可选）
 )
 
 // ==================== 对话历史相关 ====================
 
 /**
  * 获取对话列表响应体
- * GET /api/ai/conversations
+ * GET /api/conversation/list/{userId}
  */
 data class ConversationsResponse(
-    val conversations: List<ConversationSummary>
+    val success: Boolean,
+    val data: List<ConversationSummary>,
+    val total: Int
 )
 
 /**
@@ -41,61 +34,90 @@ data class ConversationsResponse(
  */
 data class ConversationSummary(
     val id: String,
+    val userId: String,
     val title: String,
-    val lastMessage: String?, // 最后一条消息预览
-    val messageCount: Int, // 消息数量
-    val createdAt: Long,
-    val updatedAt: Long
+    val createdAt: String, // LocalDateTime 格式
+    val updatedAt: String,
+    val isDeleted: Int
 )
 
 // ==================== 单个对话详情相关 ====================
 
 /**
  * 获取对话详情响应体
- * GET /api/ai/conversations/{conversationId}
+ * GET /api/conversation/detail/{conversationId}
  */
 data class ConversationDetailResponse(
+    val success: Boolean,
+    val data: ConversationDetail
+)
+
+data class ConversationDetail(
     val id: String,
+    val userId: String,
     val title: String,
-    val messages: List<MessageDto>,
-    val createdAt: Long,
-    val updatedAt: Long
+    val createdAt: String,
+    val updatedAt: String,
+    val isDeleted: Int
+)
+
+/**
+ * 获取对话消息列表响应体
+ * GET /api/conversation/messages/{conversationId}
+ */
+data class ConversationMessagesResponse(
+    val success: Boolean,
+    val data: List<MessageDto>,
+    val total: Int
 )
 
 /**
  * 消息DTO（用于网络传输）
  */
 data class MessageDto(
-    val id: String,
-    val content: String,
+    val id: Long,
+    val conversationId: String,
     val role: String, // "user" 或 "assistant"
-    val timestamp: Long
+    val content: String,
+    val createdAt: String, // LocalDateTime 格式
+    val isDeleted: Int
 )
 
 // ==================== 创建新对话相关 ====================
 
 /**
  * 创建新对话请求体
- * POST /api/ai/conversations
+ * POST /api/ai/chat/new 或 POST /api/conversation/create
  */
 data class CreateConversationRequest(
-    val title: String // 对话标题
+    val userId: String, // 用户ID
+    val title: String? = "新对话", // 对话标题
+    val message: String? = null // 首条消息（可选）
 )
 
 /**
  * 创建新对话响应体
  */
 data class CreateConversationResponse(
+    val success: Boolean,
+    val data: ConversationData,
+    val message: String? = null
+)
+
+data class ConversationData(
     val id: String,
+    val userId: String,
     val title: String,
-    val createdAt: Long
+    val createdAt: String,
+    val updatedAt: String,
+    val isDeleted: Int
 )
 
 // ==================== 删除对话相关 ====================
 
 /**
  * 删除对话响应体
- * DELETE /api/ai/conversations/{conversationId}
+ * DELETE /api/ai/conversations/{memoryId}
  */
 data class DeleteConversationResponse(
     val success: Boolean,
