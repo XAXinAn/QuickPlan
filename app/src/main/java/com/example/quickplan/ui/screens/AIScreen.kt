@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -23,7 +24,6 @@ fun AIScreen() {
     var recognizedText by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
 
-    // 相册选择器
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -33,7 +33,6 @@ fun AIScreen() {
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 val image = InputImage.fromBitmap(bitmap, 0)
 
-                // 创建中文识别器
                 val recognizer = TextRecognition.getClient(
                     ChineseTextRecognizerOptions.Builder().build()
                 )
@@ -66,8 +65,16 @@ fun AIScreen() {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Button(onClick = { launcher.launch("image/*") }) {
-                    Text(text = "选择图片识别文字")
+                Button(
+                    onClick = { launcher.launch("image/*") },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1976D2) // 蓝色背景
+                    )
+                ) {
+                    Text(
+                        text = "选择图片识别文字",
+                        color = Color.White // 白色文字
+                    )
                 }
             }
         }
@@ -85,8 +92,13 @@ fun AIScreen() {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = recognizedText)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { showDialog = false }) {
-                        Text(text = "关闭")
+                    Button(
+                        onClick = { showDialog = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1976D2) // 弹窗按钮也用蓝色
+                        )
+                    ) {
+                        Text(text = "关闭", color = Color.White)
                     }
                 }
             }
