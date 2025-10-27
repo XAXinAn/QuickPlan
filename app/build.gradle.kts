@@ -6,9 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.quickplan"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.quickplan"
@@ -42,6 +40,18 @@ android {
 }
 
 dependencies {
+    // AppCompat for theme compatibility
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    
+    // Google ML Kit 文字识别 - 中文识别
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.0")
+    
+    // CameraX for camera functionality
+    implementation("androidx.camera:camera-core:1.3.1")
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -50,11 +60,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended") // Material Icons
-    implementation(platform("androidx.compose:compose-bom:2025.10.00"))
-    implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.0")
     implementation("androidx.compose.foundation:foundation:1.6.0")
     implementation("com.kizitonwose.calendar:compose:2.6.0")
@@ -74,6 +80,10 @@ dependencies {
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

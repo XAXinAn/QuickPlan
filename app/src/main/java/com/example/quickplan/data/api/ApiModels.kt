@@ -14,7 +14,36 @@ package com.example.quickplan.data.api
 data class ChatRequest(
     val memoryId: String, // 对话ID（必填）
     val message: String, // 用户输入的消息内容
-    val userId: String? = null // 用户ID（可选）
+    val userId: String? = null, // 用户ID（可选）
+    val ocrText: String? = null // OCR 识别的文本（可选）
+)
+
+// ==================== OCR 相关 ====================
+
+/**
+ * OCR 识别请求
+ * POST /api/ai/ocr/reminder
+ */
+data class OCRReminderRequest(
+    val memoryId: String,
+    val userId: String,
+    val ocrText: String // OCR 识别出的文本
+)
+
+/**
+ * OCR 识别响应
+ */
+data class OCRReminderResponse(
+    val success: Boolean,
+    val message: String,
+    val data: ReminderData? = null
+)
+
+data class ReminderData(
+    val reminderId: String?,
+    val title: String,
+    val time: String?,
+    val description: String?
 )
 
 // ==================== 对话历史相关 ====================
@@ -120,6 +149,80 @@ data class ConversationData(
  * DELETE /api/ai/conversations/{memoryId}
  */
 data class DeleteConversationResponse(
+    val success: Boolean,
+    val message: String
+)
+
+// ==================== 日程管理相关 ====================
+
+/**
+ * 日程列表响应
+ * GET /api/schedule/list/{userId}
+ */
+data class ScheduleListResponse(
+    val success: Boolean,
+    val data: List<ScheduleDto>,
+    val total: Int,
+    val message: String? = null
+)
+
+/**
+ * 日程数据传输对象
+ */
+data class ScheduleDto(
+    val id: String,
+    val userId: String,
+    val title: String,
+    val location: String?,
+    val date: String, // 格式: yyyy-MM-dd
+    val time: String, // 格式: HH:mm
+    val description: String?,
+    val createdAt: String,
+    val updatedAt: String,
+    val isDeleted: Int
+)
+
+/**
+ * 创建日程请求
+ * POST /api/schedule/create
+ */
+data class CreateScheduleRequest(
+    val userId: String,
+    val title: String,
+    val location: String?,
+    val date: String, // 格式: yyyy-MM-dd
+    val time: String, // 格式: HH:mm
+    val description: String?
+)
+
+/**
+ * 更新日程请求
+ * PUT /api/schedule/update
+ */
+data class UpdateScheduleRequest(
+    val id: String,
+    val userId: String,
+    val title: String,
+    val location: String?,
+    val date: String, // 格式: yyyy-MM-dd
+    val time: String, // 格式: HH:mm
+    val description: String?
+)
+
+/**
+ * 日程操作响应
+ */
+data class ScheduleResponse(
+    val success: Boolean,
+    val data: ScheduleDto?,
+    val message: String
+)
+
+/**
+ * 删除日程响应
+ * DELETE /api/schedule/delete/{scheduleId}
+ */
+data class DeleteScheduleResponse(
     val success: Boolean,
     val message: String
 )

@@ -67,4 +67,85 @@ interface AiApiService {
      */
     @DELETE("api/conversation/delete/{conversationId}")
     suspend fun deleteConversation(@Path("conversationId") conversationId: String): Response<DeleteConversationResponse>
+    
+    /**
+     * OCR 识别并创建提醒
+     * POST http://localhost:8080/api/ai/ocr/reminder
+     * 
+     * 📍 API调用位置 #6: 用户上传图片后,OCR识别文字并自动创建提醒
+     */
+    @POST("api/ai/ocr/reminder")
+    suspend fun createReminderFromOCR(@Body request: OCRReminderRequest): Response<OCRReminderResponse>
+    
+    // ==================== 日程管理相关 ====================
+    
+    /**
+     * 获取用户的所有日程
+     * GET http://localhost:8080/api/schedule/list/{userId}
+     * 
+     * 📍 API调用位置 #7: 加载用户的日程列表
+     */
+    @GET("api/schedule/list/{userId}")
+    suspend fun getSchedules(@Path("userId") userId: String): Response<ScheduleListResponse>
+    
+    /**
+     * 创建新日程
+     * POST http://localhost:8080/api/schedule/create
+     * 
+     * 📍 API调用位置 #8: 用户创建新日程
+     */
+    @POST("api/schedule/create")
+    suspend fun createSchedule(@Body request: CreateScheduleRequest): Response<ScheduleResponse>
+    
+    /**
+     * 更新日程
+     * PUT http://localhost:8080/api/schedule/update
+     * 
+     * 📍 API调用位置 #9: 用户编辑日程
+     */
+    @PUT("api/schedule/update")
+    suspend fun updateSchedule(@Body request: UpdateScheduleRequest): Response<ScheduleResponse>
+    
+    /**
+     * 删除日程
+     * DELETE http://localhost:8080/api/schedule/delete/{scheduleId}
+     * 
+     * 📍 API调用位置 #10: 用户删除日程
+     */
+    @DELETE("api/schedule/delete/{scheduleId}")
+    suspend fun deleteSchedule(@Path("scheduleId") scheduleId: String): Response<DeleteScheduleResponse>
+    
+    /**
+     * 获取指定日期范围的日程
+     * GET http://localhost:8080/api/schedule/range
+     * 
+     * 📍 API调用位置 #11: 加载日历视图中某个月份的日程
+     */
+    @GET("api/schedule/range")
+    suspend fun getSchedulesByDateRange(
+        @Query("userId") userId: String,
+        @Query("startDate") startDate: String,
+        @Query("endDate") endDate: String
+    ): Response<ScheduleListResponse>
+    
+    /**
+     * 获取指定日期的日程
+     * GET http://localhost:8080/api/schedule/date
+     * 
+     * 📍 API调用位置 #12: 加载某一天的日程
+     */
+    @GET("api/schedule/date")
+    suspend fun getSchedulesByDate(
+        @Query("userId") userId: String,
+        @Query("date") date: String
+    ): Response<ScheduleListResponse>
+    
+    /**
+     * 获取日程详情
+     * GET http://localhost:8080/api/schedule/detail/{scheduleId}
+     * 
+     * 📍 API调用位置 #13: 查看单个日程的详细信息
+     */
+    @GET("api/schedule/detail/{scheduleId}")
+    suspend fun getScheduleDetail(@Path("scheduleId") scheduleId: String): Response<ScheduleResponse>
 }

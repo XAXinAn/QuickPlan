@@ -1,5 +1,6 @@
 package com.example.quickplan.ui.screens
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.quickplan.data.model.Message
+import com.example.quickplan.ui.components.ImagePickerButton
 import com.example.quickplan.viewmodel.AiViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -31,9 +35,14 @@ import java.util.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AIScreen(
-    viewModel: AiViewModel = viewModel()
-) {
+fun AIScreen() {
+    val context = LocalContext.current
+    val viewModel: AiViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+            context.applicationContext as android.app.Application
+        )
+    )
+    
     val messages by viewModel.messages.collectAsState()
     val conversations by viewModel.conversations.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -110,6 +119,9 @@ fun AIScreen(
                         viewModel.sendMessage(inputText)
                         inputText = ""
                     }
+                },
+                onImageSelected = { bitmap ->
+                    viewModel.processOCRImage(bitmap)
                 },
                 enabled = !isLoading
             )
@@ -352,6 +364,7 @@ fun MessageInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    onImageSelected: (Bitmap) -> Unit,
     enabled: Boolean
 ) {
     Surface(
@@ -365,6 +378,12 @@ fun MessageInput(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.Bottom
         ) {
+            // 图片选择按钮
+            ImagePickerButton(
+                onImageSelected = onImageSelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,

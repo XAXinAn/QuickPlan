@@ -1,14 +1,19 @@
 package com.example.quickplan.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.graphics.Bitmap
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quickplan.data.api.*
 import com.example.quickplan.data.model.Conversation
 import com.example.quickplan.data.model.Message
+import com.example.quickplan.utils.MLKitOCRHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * AI 对话界面 ViewModel
@@ -16,10 +21,19 @@ import kotlinx.coroutines.launch
  * 
  * 📍 所有后端API调用都通过这个类进行
  */
-class AiViewModel : ViewModel() {
+class AiViewModel(application: Application) : AndroidViewModel(application) {
     
     // API 服务实例
     private val apiService = RetrofitClient.aiApiService
+    
+    // OCR 助手 (Google ML Kit 会自动管理模型下载)
+    private val ocrHelper = MLKitOCRHelper
+    
+    override fun onCleared() {
+        super.onCleared()
+        // 释放 ML Kit 资源
+        MLKitOCRHelper.release()
+    }
     
     // 当前用户ID（实际应用中应该从登录状态获取）
     private val currentUserId = "default_user_001"
@@ -327,5 +341,190 @@ class AiViewModel : ViewModel() {
         _currentMemoryId.value = null
         _messages.value = emptyList()
         _showSidebar.value = false
+    }
+    
+    /**
+     * 📍 API调用位置 #6: OCR 识别并创建提醒
+     * 1. 使用 PaddleOCR 识别图片文字
+     * 2. 调用 POST /api/ai/ocr/reminder
+     * @param bitmap 要识别的图片
+     */
+    fun processOCRImage(bitmap: Bitmap) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _errorMessage.value = null
+                
+                // 添加一个临时的提示消息
+                val tempMessage = Message(
+                    content = "🔍 正在识别图片内容...",
+                    isUser = false
+                )
+                _messages.value = _messages.value + tempMessage
+                
+                // 在 IO 线程进行 OCR 识别
+                val ocrText = withContext(Dispatchers.IO) {
+                    ocrHelper.recognizeText(bitmap)
+                }
+                
+                // 移除临时消息
+                _messages.value = _messages.value.dropLast(1)
+                
+                if (ocrText.isNotBlank()) {
+                    // 调用后端处理 OCR 文本
+                    processOCRText(ocrText)
+                } else {
+                    _errorMessage.value = "OCR 识别失败,未能识别出文字"
+                    val errorMsg = Message(
+                        content = "❌ OCR 识别失败,图片中没有识别到文字内容",
+                        isUser = false
+                    )
+                    _messages.value = _messages.value + errorMsg
+                }
+                
+            } catch (e: Exception) {
+                _errorMessage.value = "OCR 识别出错: ${e.message}"
+                android.util.Log.e("AiViewModel", "OCR recognition error", e)
+                
+                // 显示错误消息
+                val errorMsg = Message(
+                    content = "❌ OCR 识别异常: ${e.message}",
+                    isUser = false
+                )
+                _messages.value = _messages.value.dropLast(1) + errorMsg
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    /**
+     * 处理 OCR 识别出的文本
+     * 改为通过对话接口让 AI 自主调用工具创建日程
+     * @param ocrText OCR 识别出的文本
+     */
+    private fun processOCRText(ocrText: String) {
+        if (ocrText.isBlank()) {
+            _errorMessage.value = "OCR 识别文本为空"
+            return
+        }
+        
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _errorMessage.value = null
+                
+                // 添加用户消息显示 OCR 结果
+                val ocrMessage = Message(
+                    content = "📷 图片识别内容:\n$ocrText",
+                    isUser = true
+                )
+                _messages.value = _messages.value + ocrMessage
+                
+                // 如果没有当前会话，先创建一个新会话
+                if (_currentMemoryId.value == null) {
+                    createNewConversation()
+                    // 等待会话创建完成
+                    if (_currentMemoryId.value == null) {
+                        _errorMessage.value = "创建会话失败，请重试"
+                        _isLoading.value = false
+                        return@launch
+                    }
+                }
+                
+                // 构造消息：让 AI 通过工具调用自动添加日程
+                val messageToAI = "帮我添加日程：$ocrText"
+                
+                // 创建一个临时的 AI 消息用于显示流式内容
+                val aiMessageId = "ai-msg-ocr-${System.currentTimeMillis()}"
+                val aiMessage = Message(
+                    id = aiMessageId,
+                    content = "",
+                    isUser = false,
+                    timestamp = System.currentTimeMillis()
+                )
+                _messages.value = _messages.value + aiMessage
+                
+                // 调用流式聊天接口,让 AI 自己使用工具
+                val chatRequest = ChatRequest(
+                    message = messageToAI,
+                    memoryId = _currentMemoryId.value!!,
+                    userId = currentUserId
+                )
+                
+                val response = apiService.sendMessageStream(chatRequest)
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val responseBody = response.body()!!
+                    val inputStream = responseBody.byteStream()
+                    val reader = inputStream.bufferedReader()
+                    
+                    val fullReply = StringBuilder()
+                    
+                    try {
+                        // 逐字符读取流式数据
+                        val buffer = CharArray(256)
+                        var charsRead: Int
+                        
+                        while (reader.read(buffer).also { charsRead = it } != -1) {
+                            val chunk = String(buffer, 0, charsRead)
+                            fullReply.append(chunk)
+                            
+                            // 实时更新界面上的 AI 消息
+                            _messages.value = _messages.value.map { msg ->
+                                if (msg.id == aiMessageId) {
+                                    msg.copy(content = fullReply.toString())
+                                } else {
+                                    msg
+                                }
+                            }
+                        }
+                        
+                        // 如果读取完成但没有内容，显示错误
+                        if (fullReply.isEmpty()) {
+                            fullReply.append("抱歉，AI 服务暂时不可用，请稍后重试")
+                            _messages.value = _messages.value.map { msg ->
+                                if (msg.id == aiMessageId) {
+                                    msg.copy(content = fullReply.toString())
+                                } else {
+                                    msg
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // 如果出现异常，在消息中显示错误提示
+                        val errorMsg = when {
+                            fullReply.isEmpty() -> "抱歉，AI 服务连接失败，请稍后重试"
+                            else -> "${fullReply}\n\n[连接中断]"
+                        }
+                        _messages.value = _messages.value.map { msg ->
+                            if (msg.id == aiMessageId) {
+                                msg.copy(content = errorMsg)
+                            } else {
+                                msg
+                            }
+                        }
+                        _errorMessage.value = "AI服务连接异常: ${e.message}"
+                    } finally {
+                        reader.close()
+                        inputStream.close()
+                    }
+                    
+                    // 流式传输完成，刷新对话列表
+                    loadConversations()
+                } else {
+                    _errorMessage.value = "AI 请求失败: ${response.code()}"
+                    // 移除临时的 AI 消息
+                    _messages.value = _messages.value.filter { it.id != aiMessageId }
+                }
+                
+            } catch (e: Exception) {
+                _errorMessage.value = "AI 处理出错: ${e.message}"
+                android.util.Log.e("AiViewModel", "AI chat error", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }
