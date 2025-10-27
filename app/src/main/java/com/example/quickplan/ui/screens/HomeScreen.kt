@@ -104,7 +104,10 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("addSchedule") },
+                onClick = {
+                    // ✅ 把当前选中的日期传给 AddScheduleScreen
+                    navController.navigate("addSchedule/${selectedDate}")
+                },
                 containerColor = Color(0xFF2979FF),
                 shape = CircleShape,
                 modifier = Modifier.size(64.dp),
@@ -112,6 +115,7 @@ fun HomeScreen(navController: NavController) {
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "添加日程", tint = Color.White, modifier = Modifier.size(32.dp))
             }
+
         }
     ) { paddingValues ->
         Column(

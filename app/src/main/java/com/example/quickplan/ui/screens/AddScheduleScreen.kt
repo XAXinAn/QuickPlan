@@ -20,19 +20,27 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddScheduleScreen(navController: NavController) {
+fun AddScheduleScreen(
+    navController: NavController,
+    defaultDate: String? // ← 从导航参数接收日期字符串
+) {
     val context = LocalContext.current
     val repository = remember { ScheduleRepository(context) }
     val scope = rememberCoroutineScope()
 
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedTime by remember { mutableStateOf(LocalTime.now()) }
+
+    // ✅ 默认日期为传入的 defaultDate，否则为今天
+    var selectedDate by remember {
+        mutableStateOf(defaultDate?.let { LocalDate.parse(it) } ?: LocalDate.now())
+    }
+
+    // ✅ 默认时间为 00:00
+    var selectedTime by remember { mutableStateOf(LocalTime.of(0, 0)) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -72,16 +80,14 @@ fun AddScheduleScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 日期和时间按钮在同一行
+            // 日期 + 时间
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 // 日期按钮
                 Button(
                     onClick = {
-                        val now = Calendar.getInstance()
                         DatePickerDialog(
                             context,
                             { _, year, month, day ->

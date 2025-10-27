@@ -24,7 +24,10 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         modifier = modifier
     ) {
         composable(Screen.Home.route) { HomeScreen(navController) }
-        composable(Screen.AddSchedule.route) { AddScheduleScreen(navController) } // 使用 Screen 定义的 route
+        composable("addSchedule/{date}") { backStackEntry ->
+            val dateArg = backStackEntry.arguments?.getString("date")
+            AddScheduleScreen(navController, dateArg)
+        }
         composable(Screen.AI.route) { AIScreen() }
         composable(Screen.Profile.route) { ProfileScreen() }
         composable("editSchedule/{id}") { backStackEntry ->
