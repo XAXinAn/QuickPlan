@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +27,19 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Arrangement
+
+// 自定义 Saver 用于保存和恢复 LocalDate
+val localDateSaver = Saver<LocalDate, String>(
+    save = { it.toString() },
+    restore = { LocalDate.parse(it) }
+)
+
+// 自定义 Saver 用于保存和恢复 YearMonth
+val yearMonthSaver = Saver<YearMonth, String>(
+    save = { it.toString() },
+    restore = { YearMonth.parse(it) }
+)
 
 @Composable
 fun CalendarGrid(
@@ -98,18 +111,23 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
     val scope = rememberCoroutineScope()
     val schedules by repository.schedules.collectAsState(initial = emptyList())
 
-    val initialLocalDate = remember {
-        initialDate?.let { LocalDate.parse(it) } ?: LocalDate.now()
+    // 使用 rememberSaveable 来保存UI状态, 保证在返回或配置更改后状态得以保留
+    // 初始值仅在第一次创建时(或进程被杀后)使用。
+    var selectedDate by rememberSaveable(stateSaver = localDateSaver) {
+        mutableStateOf(LocalDate.now())
+    }
+    var currentMonth by rememberSaveable(stateSaver = yearMonthSaver) {
+        mutableStateOf(YearMonth.from(LocalDate.now()))
     }
 
-    var currentMonth by remember { mutableStateOf(YearMonth.from(initialLocalDate)) }
-    var selectedDate by remember { mutableStateOf(initialLocalDate) }
-
+    // 这个 LaunchedEffect 专门处理从其他页面导航回来时附带的日期参数
+    // 只有在 initialDate (来自导航参数) 非空时，它才会更新UI状态
+    // 按返回键回来时，initialDate 为 null，此代码块不执行，从而保留了 rememberSaveable 的状态
     LaunchedEffect(initialDate) {
-        initialDate?.let {
-            val date = LocalDate.parse(it)
-            selectedDate = date
-            currentMonth = YearMonth.from(date)
+        initialDate?.let { dateString ->
+            val newDate = LocalDate.parse(dateString)
+            selectedDate = newDate
+            currentMonth = YearMonth.from(newDate)
         }
     }
 
@@ -117,7 +135,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // ✅ 把当前选中的日期传给 AddScheduleScreen
                     navController.navigate("addSchedule/${selectedDate}")
                 },
                 containerColor = Color(0xFF2979FF),
@@ -127,7 +144,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "添加日程", tint = Color.White, modifier = Modifier.size(32.dp))
             }
-
         }
     ) { paddingValues ->
         Column(
@@ -136,7 +152,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // 月份选择
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -149,7 +164,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 星期标题
             val weekDays = listOf("一","二","三","四","五","六","日")
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 weekDays.forEach { day ->
@@ -159,12 +173,13 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 日历
-            CalendarGrid(currentMonth = currentMonth, selectedDate = selectedDate, onDateSelected = { selectedDate = it })
+            CalendarGrid(currentMonth = currentMonth, selectedDate = selectedDate, onDateSelected = { 
+                selectedDate = it
+                currentMonth = YearMonth.from(it)
+             })
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 当天日程
             val todaySchedules = schedules.filter { it.date == selectedDate.toString() }
             Text("${selectedDate.monthValue}月${selectedDate.dayOfMonth}日 的日程", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF2979FF))
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +196,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    // 安全传递 id
                                     navController.navigate("editSchedule/${schedule.id}")
                                 }
                         ) {

@@ -32,10 +32,19 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
     val schedules by repository.schedules.collectAsState(initial = emptyList())
     val editingSchedule = schedules.find { it.id == scheduleId }
 
-    var title by remember { mutableStateOf(editingSchedule?.title ?: "") }
-    var location by remember { mutableStateOf(editingSchedule?.location ?: "") }
-    var selectedDate by remember { mutableStateOf(editingSchedule?.date?.let { LocalDate.parse(it) } ?: LocalDate.now()) }
-    var selectedTime by remember { mutableStateOf(editingSchedule?.time?.let { LocalTime.parse(it) } ?: LocalTime.of(0, 1)) }
+    var title by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf(LocalTime.of(0, 1)) }
+
+    LaunchedEffect(editingSchedule) {
+        editingSchedule?.let {
+            title = it.title
+            location = it.location
+            selectedDate = LocalDate.parse(it.date)
+            selectedTime = LocalTime.parse(it.time)
+        }
+    }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -53,8 +62,10 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                // 标题
-                OutlinedTextField(
+                // Title, Location, Date, Time fields...
+
+                //... (rest of the UI is the same)
+                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("标题") },
@@ -63,7 +74,6 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 地点
                 OutlinedTextField(
                     value = location,
                     onValueChange = { location = it },
@@ -73,15 +83,13 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 日期和时间按钮
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                    // 日期按钮
                     Button(
                         onClick = {
                             DatePickerDialog(
                                 context,
-                                { _: android.widget.DatePicker, year: Int, month: Int, day: Int ->
+                                { _, year, month, day ->
                                     selectedDate = LocalDate.of(year, month + 1, day)
                                 },
                                 selectedDate.year,
@@ -96,12 +104,11 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
                         Text("日期: ${selectedDate.format(dateFormatter)}", color = Color.Black)
                     }
 
-                    // 时间按钮
                     Button(
                         onClick = {
                             TimePickerDialog(
                                 context,
-                                { _: TimePicker, hour: Int, minute: Int ->
+                                { _, hour, minute ->
                                     selectedTime = LocalTime.of(hour, minute)
                                 },
                                 selectedTime.hour,
@@ -119,34 +126,31 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 保存修改按钮
+
                 Button(
                     onClick = {
                         if (title.isNotBlank()) {
                             scope.launch {
+                                val scheduleToSave = editingSchedule?.copy(
+                                    title = title,
+                                    location = location,
+                                    date = selectedDate.toString(),
+                                    time = selectedTime.format(timeFormatter)
+                                ) ?: Schedule(
+                                    title = title,
+                                    location = location,
+                                    date = selectedDate.toString(),
+                                    time = selectedTime.format(timeFormatter)
+                                )
+
                                 if (editingSchedule != null) {
-                                    val updated = Schedule(
-                                        id = editingSchedule.id,
-                                        title = title,
-                                        location = location,
-                                        date = selectedDate.toString(),
-                                        time = selectedTime.format(timeFormatter)
-                                    )
-                                    repository.updateSchedule(updated)
+                                    repository.updateSchedule(scheduleToSave)
                                 } else {
-                                    repository.addSchedule(
-                                        Schedule(
-                                            title = title,
-                                            location = location,
-                                            date = selectedDate.toString(),
-                                            time = selectedTime.format(timeFormatter)
-                                        )
-                                    )
+                                    repository.addSchedule(scheduleToSave)
                                 }
-                                navController.navigate("home?date=${selectedDate}") {
-                                    popUpTo("home") { inclusive = true }
-                                    launchSingleTop = true
-                                }
+
+                                navController.previousBackStackEntry?.savedStateHandle?.set("selectedDate", selectedDate.toString())
+                                navController.popBackStack()
                             }
                         }
                     },

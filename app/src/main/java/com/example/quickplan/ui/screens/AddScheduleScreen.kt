@@ -1,7 +1,9 @@
 package com.example.quickplan.ui.screens
 
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.widget.TimePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -141,10 +143,8 @@ fun AddScheduleScreen(
                                     time = selectedTime.format(timeFormatter)
                                 )
                             )
-                            navController.navigate("home?date=${selectedDate}") {
-                                popUpTo("home") { inclusive = true }
-                                launchSingleTop = true
-                            }
+                            navController.previousBackStackEntry?.savedStateHandle?.set("selectedDate", selectedDate.toString())
+                            navController.popBackStack()
                         }
                     }
                 },
