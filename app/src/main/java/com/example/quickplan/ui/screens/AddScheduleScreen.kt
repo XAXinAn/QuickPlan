@@ -39,8 +39,8 @@ fun AddScheduleScreen(
         mutableStateOf(defaultDate?.let { LocalDate.parse(it) } ?: LocalDate.now())
     }
 
-    // ✅ 默认时间为 00:00
-    var selectedTime by remember { mutableStateOf(LocalTime.of(0, 0)) }
+    // ✅ 默认时间为 00:01
+    var selectedTime by remember { mutableStateOf(LocalTime.of(0, 1)) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -141,8 +141,11 @@ fun AddScheduleScreen(
                                     time = selectedTime.format(timeFormatter)
                                 )
                             )
+                            navController.navigate("home?date=${selectedDate}") {
+                                popUpTo("home") { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
-                        navController.popBackStack()
                     }
                 },
                 modifier = Modifier

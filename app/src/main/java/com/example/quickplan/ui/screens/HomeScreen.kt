@@ -92,14 +92,26 @@ fun CalendarGrid(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, initialDate: String?) {
     val context = LocalContext.current
     val repository = remember { ScheduleRepository(context) }
     val scope = rememberCoroutineScope()
     val schedules by repository.schedules.collectAsState(initial = emptyList())
 
-    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val initialLocalDate = remember {
+        initialDate?.let { LocalDate.parse(it) } ?: LocalDate.now()
+    }
+
+    var currentMonth by remember { mutableStateOf(YearMonth.from(initialLocalDate)) }
+    var selectedDate by remember { mutableStateOf(initialLocalDate) }
+
+    LaunchedEffect(initialDate) {
+        initialDate?.let {
+            val date = LocalDate.parse(it)
+            selectedDate = date
+            currentMonth = YearMonth.from(date)
+        }
+    }
 
     Scaffold(
         floatingActionButton = {

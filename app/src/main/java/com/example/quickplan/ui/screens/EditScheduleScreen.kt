@@ -32,24 +32,17 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
     val schedules by repository.schedules.collectAsState(initial = emptyList())
     val editingSchedule = schedules.find { it.id == scheduleId }
 
-    if (editingSchedule == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("未找到要编辑的日程")
-        }
-        return
-    }
-
-    var title by remember { mutableStateOf(editingSchedule.title) }
-    var location by remember { mutableStateOf(editingSchedule.location) }
-    var selectedDate by remember { mutableStateOf(LocalDate.parse(editingSchedule.date)) }
-    var selectedTime by remember { mutableStateOf(LocalTime.parse(editingSchedule.time)) }
+    var title by remember { mutableStateOf(editingSchedule?.title ?: "") }
+    var location by remember { mutableStateOf(editingSchedule?.location ?: "") }
+    var selectedDate by remember { mutableStateOf(editingSchedule?.date?.let { LocalDate.parse(it) } ?: LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf(editingSchedule?.time?.let { LocalTime.parse(it) } ?: LocalTime.of(0, 1)) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("编辑日程", fontWeight = FontWeight.Bold) })
+            TopAppBar(title = { Text(if (editingSchedule != null) "编辑日程" else "新建日程", fontWeight = FontWeight.Bold) })
         },
         content = { paddingValues ->
             Column(
@@ -130,16 +123,30 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
                 Button(
                     onClick = {
                         if (title.isNotBlank()) {
-                            val updated = Schedule(
-                                id = editingSchedule.id,
-                                title = title,
-                                location = location,
-                                date = selectedDate.toString(),
-                                time = selectedTime.format(timeFormatter)
-                            )
                             scope.launch {
-                                repository.updateSchedule(updated)
-                                navController.popBackStack()
+                                if (editingSchedule != null) {
+                                    val updated = Schedule(
+                                        id = editingSchedule.id,
+                                        title = title,
+                                        location = location,
+                                        date = selectedDate.toString(),
+                                        time = selectedTime.format(timeFormatter)
+                                    )
+                                    repository.updateSchedule(updated)
+                                } else {
+                                    repository.addSchedule(
+                                        Schedule(
+                                            title = title,
+                                            location = location,
+                                            date = selectedDate.toString(),
+                                            time = selectedTime.format(timeFormatter)
+                                        )
+                                    )
+                                }
+                                navController.navigate("home?date=${selectedDate}") {
+                                    popUpTo("home") { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         }
                     },
@@ -149,7 +156,7 @@ fun EditScheduleScreen(navController: NavController, scheduleId: Long) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
                     shape = RoundedCornerShape(25.dp)
                 ) {
-                    Text("保存修改", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(if (editingSchedule != null) "保存修改" else "保存", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }

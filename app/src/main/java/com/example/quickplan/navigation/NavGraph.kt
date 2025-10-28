@@ -3,8 +3,10 @@ package com.example.quickplan.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.quickplan.ui.screens.AIScreen
 import com.example.quickplan.ui.screens.HomeScreen
 import com.example.quickplan.ui.screens.AddScheduleScreen
@@ -20,10 +22,16 @@ import androidx.compose.material3.Text
 fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = "home",
         modifier = modifier
     ) {
-        composable(Screen.Home.route) { HomeScreen(navController) }
+        composable(
+            route = "home?date={date}",
+            arguments = listOf(navArgument("date") { nullable = true })
+        ) { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date")
+            HomeScreen(navController, date)
+        }
         composable("addSchedule/{date}") { backStackEntry ->
             val dateArg = backStackEntry.arguments?.getString("date")
             AddScheduleScreen(navController, dateArg)
@@ -43,4 +51,3 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         }
     }
 }
-
