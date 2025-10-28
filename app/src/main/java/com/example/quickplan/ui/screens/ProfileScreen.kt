@@ -12,6 +12,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.quickplan.navigation.Screen
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,7 +26,7 @@ import com.example.quickplan.ThemeState
 import com.example.quickplan.ui.theme.Purple40
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController) {
     val isDarkMode by ThemeState.isDarkMode
 
     Surface(
@@ -131,22 +134,22 @@ fun ProfileScreen() {
                             LoginMethodButton(
                                 text = "手机号登录",
                                 icon = Icons.Default.Phone
-                            ) { /* TODO: 实现手机号登录 */ }
+                            ) { navController.navigate(Screen.PhoneLogin.route) }
                             
                             LoginMethodButton(
                                 text = "微信登录",
                                 icon = Icons.Default.Message
-                            ) { /* TODO: 实现微信登录 */ }
+                            ) { navController.navigate(Screen.WeChatLogin.route) }
                             
                             LoginMethodButton(
                                 text = "QQ登录",
                                 icon = Icons.Default.Chat
-                            ) { /* TODO: 实现QQ登录 */ }
+                            ) { navController.navigate(Screen.QQLogin.route) }
                             
                             LoginMethodButton(
                                 text = "邮箱登录",
                                 icon = Icons.Default.Email
-                            ) { /* TODO: 实现邮箱登录 */ }
+                            ) { navController.navigate(Screen.EmailLogin.route) }
                         }
                     },
                     confirmButton = { },
@@ -172,22 +175,22 @@ fun ProfileScreen() {
                             LoginMethodButton(
                                 text = "手机号注册",
                                 icon = Icons.Default.Phone
-                            ) { /* TODO: 实现手机号注册 */ }
+                            ) { navController.navigate(Screen.PhoneRegister.route) }
                             
                             LoginMethodButton(
                                 text = "微信注册",
                                 icon = Icons.Default.Message
-                            ) { /* TODO: 实现微信注册 */ }
+                            ) { navController.navigate(Screen.WeChatRegister.route) }
                             
                             LoginMethodButton(
                                 text = "QQ注册",
                                 icon = Icons.Default.Chat
-                            ) { /* TODO: 实现QQ注册 */ }
+                            ) { navController.navigate(Screen.QQRegister.route) }
                             
                             LoginMethodButton(
                                 text = "邮箱注册",
                                 icon = Icons.Default.Email
-                            ) { /* TODO: 实现邮箱注册 */ }
+                            ) { navController.navigate(Screen.EmailRegister.route) }
                         }
                     },
                     confirmButton = { },
@@ -199,25 +202,40 @@ fun ProfileScreen() {
                 )
             }
 
-            // 功能按钮列表
-            ProfileButton(
-                text = "历史日程",
-                icon = Icons.Default.History
+            // 新功能按钮列表： 悬浮窗开关、历史添加、更多
+            // 悬浮窗开关：文本末尾有开关
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                /* TODO: 导航到历史日程页面 */
+                Text(text = "悬浮窗", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                var floatingEnabled by remember { mutableStateOf(false) }
+                Switch(checked = floatingEnabled, onCheckedChange = { floatingEnabled = it })
             }
 
             ProfileButton(
-                text = "忘记密码",
-                icon = Icons.Default.Lock
+                text = "历史添加",
+                icon = Icons.Default.History
             ) {
-                /* TODO: 导航到找回密码页面 */
+                navController.navigate(Screen.History.route)
             }
-             ProfileButton(
-                text = "语言切换",
-                icon = Icons.Default.Language
+
+            ProfileButton(
+                text = "更多",
+                icon = Icons.Default.MoreVert
             ) {
-                /* TODO: 弹出语言选项*/
+                navController.navigate(Screen.More.route)
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // 退出登录：仅当已登录时在底部显示
+            val isLoggedIn by com.example.quickplan.AuthState.isLoggedIn
+            if (isLoggedIn) {
+                Button(onClick = { com.example.quickplan.AuthState.logout() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("退出登录")
+                }
             }
         }
     }

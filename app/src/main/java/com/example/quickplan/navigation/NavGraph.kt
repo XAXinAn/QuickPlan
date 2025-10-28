@@ -20,7 +20,7 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     ) {
         composable(Screen.Home.route) { HomeScreen() }
         composable(Screen.AI.route) { AIScreen() }
-        composable(Screen.Profile.route) { ProfileScreen() }
+    composable(Screen.Profile.route) { ProfileScreen(navController) }
 
         // 登录路由
         composable(Screen.PhoneLogin.route) { PhoneLoginScreen(navController) }
@@ -33,5 +33,14 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
         composable(Screen.WeChatRegister.route) { WeChatRegisterScreen(navController) }
         composable(Screen.QQRegister.route) { QQRegisterScreen(navController) }
         composable(Screen.EmailRegister.route) { EmailRegisterScreen(navController) }
+        // History & More
+        composable(Screen.History.route) { com.example.quickplan.ui.screens.history.HistoryScreen(navController) }
+        composable(Screen.More.route) { com.example.quickplan.ui.screens.more.MoreScreen(navController) }
+
+        // More 子页面
+        composable(Screen.AccountCancel.route) { com.example.quickplan.ui.screens.more.AccountCancelScreen(navController) }
+        composable(Screen.ContactUs.route) { com.example.quickplan.ui.screens.more.ContactUsScreen(navController) }
+        composable(Screen.About.route) { com.example.quickplan.ui.screens.more.AboutScreen(navController) }
+        composable(Screen.Privacy.route) { com.example.quickplan.ui.screens.more.PrivacyScreen(navController) }
     }
 }

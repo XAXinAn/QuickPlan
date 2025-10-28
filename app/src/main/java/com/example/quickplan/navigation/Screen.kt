@@ -16,4 +16,11 @@ sealed class Screen(val route: String, val title: String) {
     object WeChatRegister : Screen("wechat_register", "微信注册")
     object QQRegister : Screen("qq_register", "QQ注册")
     object EmailRegister : Screen("email_register", "邮箱注册")
+    // 新增路由
+    object History : Screen("history", "历史添加")
+    object More : Screen("more", "更多")
+    object AccountCancel : Screen("account_cancel", "注销账号")
+    object ContactUs : Screen("contact_us", "联系我们")
+    object About : Screen("about", "关于QuickPlan")
+    object Privacy : Screen("privacy", "用户隐私协议")
 }

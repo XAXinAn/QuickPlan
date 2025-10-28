@@ -23,6 +23,25 @@ object ThemeState {
     }
 }
 
+// 简单认证状态：用于演示登录/登出
+object AuthState {
+    private val _isLoggedIn = mutableStateOf(false)
+    val isLoggedIn: State<Boolean> = _isLoggedIn
+
+    private val _userName = mutableStateOf<String?>(null)
+    val userName: State<String?> = _userName
+
+    fun login(user: String?) {
+        _isLoggedIn.value = true
+        _userName.value = user
+    }
+
+    fun logout() {
+        _isLoggedIn.value = false
+        _userName.value = null
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
