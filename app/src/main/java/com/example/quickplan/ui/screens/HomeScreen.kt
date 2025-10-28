@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -111,8 +113,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
     val scope = rememberCoroutineScope()
     val schedules by repository.schedules.collectAsState(initial = emptyList())
 
-    // 使用 rememberSaveable 来保存UI状态, 保证在返回或配置更改后状态得以保留
-    // 初始值仅在第一次创建时(或进程被杀后)使用。
     var selectedDate by rememberSaveable(stateSaver = localDateSaver) {
         mutableStateOf(LocalDate.now())
     }
@@ -120,9 +120,6 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
         mutableStateOf(YearMonth.from(LocalDate.now()))
     }
 
-    // 这个 LaunchedEffect 专门处理从其他页面导航回来时附带的日期参数
-    // 只有在 initialDate (来自导航参数) 非空时，它才会更新UI状态
-    // 按返回键回来时，initialDate 为 null，此代码块不执行，从而保留了 rememberSaveable 的状态
     LaunchedEffect(initialDate) {
         initialDate?.let { dateString ->
             val newDate = LocalDate.parse(dateString)
@@ -150,7 +147,8 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -185,16 +183,27 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
             Spacer(modifier = Modifier.height(8.dp))
 
             if (todaySchedules.isEmpty()) {
-                Text("暂无日程", color = Color.Gray)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("暂无日程", color = Color.Gray)
+                }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    todaySchedules.forEach { schedule ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp), // 2. 让列表整体变窄
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp) // 4. 避免FAB遮挡
+                ) {
+                    items(todaySchedules) { schedule ->
                         Surface(
                             tonalElevation = 2.dp,
                             shape = MaterialTheme.shapes.medium,
                             color = Color(0xFFF5F7FF),
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth() // 卡片填满LazyColumn的宽度
                                 .clickable {
                                     navController.navigate("editSchedule/${schedule.id}")
                                 }
@@ -224,13 +233,13 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(2.dp)) // 1. 更加紧凑
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Filled.Place, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(schedule.location.ifEmpty { "未填写地点" })
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(2.dp)) // 1. 更加紧凑
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Filled.Schedule, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
