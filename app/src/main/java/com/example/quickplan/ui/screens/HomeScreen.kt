@@ -1,6 +1,7 @@
 package com.example.quickplan.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,6 +31,9 @@ import java.time.LocalDate
 import java.time.YearMonth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 // 自定义 Saver 用于保存和恢复 LocalDate
 val localDateSaver = Saver<LocalDate, String>(
@@ -42,6 +46,98 @@ val yearMonthSaver = Saver<YearMonth, String>(
     save = { it.toString() },
     restore = { YearMonth.parse(it) }
 )
+
+@Composable
+fun ScheduleUrgencyBar(schedules: List<Schedule>) {
+    val now = LocalDateTime.now()
+
+    val categories = listOf(
+        "已截止" to Color(0xFFFF0000),
+        "半天内" to Color(0xFFFF5722),
+        "一天内" to Color(0xFFFF9800),
+        "三天内" to Color(0xFFFFC107),
+        "一周内" to Color(0xFFFFEB3B),
+        "一个月内" to Color(0xFFBDBDBD),
+        "一个月外" to Color(0xFF9E9E9E)
+    )
+
+    val counts = categories.associate { it.first to 0 }.toMutableMap()
+
+    for (schedule in schedules) {
+        val scheduleDateTime = try {
+            LocalDateTime.of(
+                LocalDate.parse(schedule.date),
+                if (schedule.time.isNotBlank()) LocalTime.parse(schedule.time, DateTimeFormatter.ofPattern("HH:mm")) else LocalTime.MIDNIGHT
+            )
+        } catch (e: Exception) {
+            continue // Skip schedules with invalid date/time format
+        }
+
+        when {
+            scheduleDateTime.isBefore(now) -> counts["已截止"] = counts["已截止"]!! + 1
+            scheduleDateTime.isBefore(now.plusHours(12)) -> counts["半天内"] = counts["半天内"]!! + 1
+            scheduleDateTime.isBefore(now.plusDays(1)) -> counts["一天内"] = counts["一天内"]!! + 1
+            scheduleDateTime.isBefore(now.plusDays(3)) -> counts["三天内"] = counts["三天内"]!! + 1
+            scheduleDateTime.isBefore(now.plusDays(7)) -> counts["一周内"] = counts["一周内"]!! + 1
+            scheduleDateTime.isBefore(now.plusMonths(1)) -> counts["一个月内"] = counts["一个月内"]!! + 1
+            else -> counts["一个月外"] = counts["一个月外"]!! + 1
+        }
+    }
+
+    val total = counts.values.sum().toFloat()
+
+    if (total > 0) {
+        Column {
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .height(20.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                categories.forEach { (category, color) ->
+                    val count = counts[category]!!
+                    if (count > 0) {
+                        Box(modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(count / total)
+                            .background(color))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val legendItems = categories.filter { (category, _) ->
+                counts[category]?.let { it > 0 } == true
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                legendItems.chunked(4).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.padding(vertical = 1.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        rowItems.forEach { (category, color) ->
+                            Row(
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(color, CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(text = category, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun CalendarGrid(
@@ -143,111 +239,118 @@ fun HomeScreen(navController: NavController, initialDate: String?) {
             }
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) { Icon(Icons.Filled.ArrowBack, contentDescription = "上个月") }
-                Text("${currentMonth.year}年${currentMonth.monthValue}月", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) { Icon(Icons.Filled.ArrowForward, contentDescription = "下个月") }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val weekDays = listOf("一","二","三","四","五","六","日")
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                weekDays.forEach { day ->
-                    Text(day, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) { Icon(Icons.Filled.ArrowBack, contentDescription = "上个月") }
+                    Text("${currentMonth.year}年${currentMonth.monthValue}月", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) { Icon(Icons.Filled.ArrowForward, contentDescription = "下个月") }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            item {
+                val weekDays = listOf("一", "二", "三", "四", "五", "六", "日")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    weekDays.forEach { day ->
+                        Text(day, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-            CalendarGrid(currentMonth = currentMonth, selectedDate = selectedDate, onDateSelected = { 
-                selectedDate = it
-                currentMonth = YearMonth.from(it)
-             })
+            item {
+                CalendarGrid(currentMonth = currentMonth, selectedDate = selectedDate, onDateSelected = {
+                    selectedDate = it
+                    currentMonth = YearMonth.from(it)
+                })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                ScheduleUrgencyBar(schedules = schedules)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
+                Text("${selectedDate.monthValue}月${selectedDate.dayOfMonth}日 的日程", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF2979FF))
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             val todaySchedules = schedules.filter { it.date == selectedDate.toString() }
-            Text("${selectedDate.monthValue}月${selectedDate.dayOfMonth}日 的日程", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF2979FF))
-            Spacer(modifier = Modifier.height(8.dp))
-
             if (todaySchedules.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("暂无日程", color = Color.Gray)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .padding(vertical = 50.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("暂无日程", color = Color.Gray)
+                    }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp), // 2. 让列表整体变窄
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp) // 4. 避免FAB遮挡
-                ) {
-                    items(todaySchedules) { schedule ->
-                        Surface(
-                            tonalElevation = 2.dp,
-                            shape = MaterialTheme.shapes.medium,
-                            color = Color(0xFFF5F7FF),
-                            modifier = Modifier
-                                .fillMaxWidth() // 卡片填满LazyColumn的宽度
-                                .clickable {
-                                    navController.navigate("editSchedule/${schedule.id}")
-                                }
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(schedule.title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                                    var showDialog by remember { mutableStateOf(false) }
-                                    IconButton(onClick = { showDialog = true }) { Icon(Icons.Filled.Delete, contentDescription = "删除日程", tint = Color.Red) }
+                items(todaySchedules, key = { it.id }) { schedule ->
+                    Surface(
+                        tonalElevation = 2.dp,
+                        shape = MaterialTheme.shapes.medium,
+                        color = Color(0xFFF5F7FF),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .clickable {
+                                navController.navigate("editSchedule/${schedule.id}")
+                            }
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(schedule.title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                var showDialog by remember { mutableStateOf(false) }
+                                IconButton(onClick = { showDialog = true }) { Icon(Icons.Filled.Delete, contentDescription = "删除日程", tint = Color.Red) }
 
-                                    if (showDialog) {
-                                        AlertDialog(
-                                            onDismissRequest = { showDialog = false },
-                                            title = { Text("确认删除该日程？") },
-                                            text = { Text("删除后将无法恢复。") },
-                                            confirmButton = {
-                                                TextButton(onClick = {
-                                                    scope.launch { repository.deleteSchedule(schedule.id) }
-                                                    showDialog = false
-                                                }) { Text("确认", color = Color.Red) }
-                                            },
-                                            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("取消") } }
-                                        )
-                                    }
+                                if (showDialog) {
+                                    AlertDialog(
+                                        onDismissRequest = { showDialog = false },
+                                        title = { Text("确认删除该日程？") },
+                                        text = { Text("删除后将无法恢复。") },
+                                        confirmButton = {
+                                            TextButton(onClick = {
+                                                scope.launch { repository.deleteSchedule(schedule.id) }
+                                                showDialog = false
+                                            }) { Text("确认", color = Color.Red) }
+                                        },
+                                        dismissButton = { TextButton(onClick = { showDialog = false }) { Text("取消") } }
+                                    )
                                 }
-                                Spacer(modifier = Modifier.height(2.dp)) // 1. 更加紧凑
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Place, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(schedule.location.ifEmpty { "未填写地点" })
-                                }
-                                Spacer(modifier = Modifier.height(2.dp)) // 1. 更加紧凑
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Schedule, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(schedule.time.ifEmpty { "未填写时间" })
-                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Place, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(schedule.location.ifEmpty { "未填写地点" })
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Schedule, contentDescription = null, tint = Color(0xFF2979FF), modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(schedule.time.ifEmpty { "未填写时间" })
                             }
                         }
                     }
+                    Spacer(Modifier.height(10.dp))
                 }
             }
         }
