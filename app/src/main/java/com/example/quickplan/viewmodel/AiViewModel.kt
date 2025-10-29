@@ -335,6 +335,13 @@ class AiViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * 设置错误消息（用于外部调用）
+     */
+    fun setError(message: String) {
+        _errorMessage.value = message
+    }
+    
+    /**
      * 开始新对话（不调用API，仅清空本地状态）
      */
     fun startNewConversation() {

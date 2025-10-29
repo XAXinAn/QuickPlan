@@ -1,6 +1,7 @@
 package com.example.quickplan.ui.screens
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.quickplan.data.model.Message
 import com.example.quickplan.ui.components.ImagePickerButton
+import com.example.quickplan.utils.NetworkDebugHelper
 import com.example.quickplan.viewmodel.AiViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -67,6 +69,38 @@ fun AIScreen() {
                     }
                 },
                 actions = {
+                    // 网络诊断按钮
+                    var isDiagnosing by remember { mutableStateOf(false) }
+                    val scope = rememberCoroutineScope()
+                    
+                    IconButton(
+                        onClick = {
+                            isDiagnosing = true
+                            scope.launch {
+                                try {
+                                    Log.d("AIScreen", "🔍 开始网络诊断...")
+                                    val result = NetworkDebugHelper.diagnose()
+                                    viewModel.setError(result.getMessage())
+                                } catch (e: Exception) {
+                                    Log.e("AIScreen", "诊断失败", e)
+                                    viewModel.setError("诊断异常: ${e.message}")
+                                } finally {
+                                    isDiagnosing = false
+                                }
+                            }
+                        },
+                        enabled = !isDiagnosing
+                    ) {
+                        if (isDiagnosing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.Settings, contentDescription = "网络诊断")
+                        }
+                    }
+                    
                     IconButton(onClick = { viewModel.startNewConversation() }) {
                         Icon(Icons.Default.Add, contentDescription = "新建对话")
                     }
